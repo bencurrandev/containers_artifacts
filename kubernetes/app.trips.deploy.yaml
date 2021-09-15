@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trips
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trips
+  template:
+    metadata:
+      labels:
+        app: trips
+    spec:
+      containers:
+      - name: trips
+        image: registryyoy9492.azurecr.io/trips:latest
+        ports:
+        - containerPort: 80
+        env: 
+          - name: SQL_SERVER 
+            valueFrom: 
+              secretKeyRef: 
+                name: sqlauth 
+                key: sql_fqdn 
+          - name: SQL_USER 
+            valueFrom: 
+              secretKeyRef: 
+                name: sqlauth 
+                key: sql_user 
+          - name: SQL_PASSWORD 
+            valueFrom: 
+              secretKeyRef: 
+                name: sqlauth 
+                key: sql_password 
+          - name: OPENAPI_DOCS_URI
+            value: http://localhost
