@@ -17,25 +17,23 @@ spec:
       - name: trips
         image: registryyoy9492.azurecr.io/trips:latest
         ports:
-        - containerPort: 80
-        env: 
-          - name: SQL_SERVER 
-            valueFrom: 
-              secretKeyRef: 
-                name: sqlauth 
-                key: sql_fqdn 
-          - name: SQL_USER 
-            valueFrom: 
-              secretKeyRef: 
-                name: sqlauth 
-                key: sql_user 
-          - name: SQL_PASSWORD 
-            valueFrom: 
-              secretKeyRef: 
-                name: sqlauth 
-                key: sql_password 
+          - containerPort: 80
+        env:
+          - name: CONFIG_FILES_PATH
+            value: "/mnt/secrets-store"
           - name: OPENAPI_DOCS_URI
             value: http://localhost
+        volumeMounts:
+          - name: secrets-store-inline
+            mountPath: "/mnt/secrets-store"
+            readOnly: true
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "akstask5vault"
 ---
 apiVersion: v1
 kind: Service
@@ -46,8 +44,8 @@ metadata:
     run: trips-svc
 spec:
   ports:
-  - port: 80
-    protocol: TCP
-    targetPort: 80
+    - port: 80
+      protocol: TCP
+      targetPort: 80
   selector:
     app: trips
