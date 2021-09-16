@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: poi
+  namespace: api
 spec:
   replicas: 1
   selector:
@@ -18,18 +19,30 @@ spec:
         ports:
         - containerPort: 80
         env: 
-          - name: SQL_SERVER 
-            valueFrom: 
-              secretKeyRef: 
-                name: sqlauth 
-                key: sql_fqdn 
-          - name: SQL_USER 
-            valueFrom: 
-              secretKeyRef: 
-                name: sqlauth 
-                key: sql_user 
-          - name: SQL_PASSWORD 
-            valueFrom: 
-              secretKeyRef: 
-                name: sqlauth 
-                key: sql_password 
+          - name: CONFIG_FILES_PATH 
+            value: "/mnt/secrets-store"
+        volumeMounts:
+        - name: secrets-store-inline
+          mountPath: "/mnt/secrets-store"
+          readOnly: true
+      volumes:
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: "akstask5vault"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: poi-svc
+  labels:
+    run: poi-svc
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: poi
